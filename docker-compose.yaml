@@ -1,0 +1,46 @@
+volumes:
+    postgres-volume:
+
+networks:
+    people-api-network:
+        name: "people-api-network"
+        driver: bridge
+
+services:
+
+    db:
+        image: postgres:17.0
+        container_name: "test-task-wallet-database"
+        env_file:
+            - config.env
+        networks:
+            - people-api-network
+        ports:
+            - 4545:5432
+#        healthcheck:
+#            test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+#            interval: 1s
+#            timeout: 60s
+#            retries: 60
+        volumes:
+            - postgres-volume:/var/lib/postgresql/data
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: "test-task-wallet-app"
+        env_file:
+            - config.env
+        environment:
+            POSTGRES_HOST: db
+            REDIS_HOST: redis
+            POSTGRES_PORT: 5432
+            REDIS_PORT: 6379
+        ports:
+            - ${SERVER_PORT_HTTP}:8080
+        networks:
+            - people-api-network
+        depends_on:
+            db:
+                condition: service_healthy

@@ -1,0 +1,41 @@
+basePath: /api/v1
+definitions:
+  dto.UpdateWalletDTO:
+    properties:
+      amount:
+        minimum: 0
+        type: integer
+      operationType:
+        enum:
+        - DEPOSIT
+        - WITHDRAW
+        type: string
+      valletId:
+        format: uuid
+        type: string
+    required:
+    - amount
+    - operationType
+    type: object
+info:
+  contact: {}
+  title: Wallet
+  version: "1.0"
+paths:
+  /wallet:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: operation info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateWalletDTO'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Wallet
+swagger: "2.0"
