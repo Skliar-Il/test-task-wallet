@@ -16,12 +16,14 @@ services:
         networks:
             - people-api-network
         ports:
-            - 4545:5432
+            - "4545:5432"
 #        healthcheck:
 #            test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
 #            interval: 1s
 #            timeout: 60s
 #            retries: 60
+        command:
+            postgres -c max_connections=200 -c shared_buffers=256MB
         volumes:
             - postgres-volume:/var/lib/postgresql/data
 
@@ -38,9 +40,8 @@ services:
             POSTGRES_PORT: 5432
             REDIS_PORT: 6379
         ports:
-            - ${SERVER_PORT_HTTP}:8080
+            - "8080:8080"
         networks:
             - people-api-network
         depends_on:
-            db:
-                condition: service_healthy
+            - db

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"log"
+	"os"
 	"os/signal"
 	"syscall"
 )
@@ -22,16 +23,16 @@ func Serve(cfg *config.Config, serviceList *initializer.ServiceList) {
 		StructValidator: pkgvalidator.Validator{Validator: validator.New()},
 		ErrorHandler:    exception.Middleware,
 	}
-	listenConfig := fiber.ListenConfig{
-		EnablePrefork: true,
-	}
 	server := fiber.New(serverConfig)
 
 	http.NewController(server, cfg, serviceList)
 
 	go func() {
-		if err := server.Listen(":8080", listenConfig); err != nil {
-			log.Fatalf("start server error: %v", err)
+		pid := os.Getpid()
+		log.Printf("[PID %d] starting server...", pid)
+
+		if err := server.Listen(":8080"); err != nil {
+			log.Printf("[PID %d] server listen error: %v", pid, err)
 		}
 	}()
 	select {

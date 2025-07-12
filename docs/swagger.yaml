@@ -13,9 +13,6 @@ definitions:
       valletId:
         format: uuid
         type: string
-    required:
-    - amount
-    - operationType
     type: object
 info:
   contact: {}
@@ -33,6 +30,22 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/dto.UpdateWalletDTO'
+      produces:
+      - application/json
+      responses: {}
+      tags:
+      - Wallet
+  /wallets/{WALLET_UUID}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: UUID wallet
+        format: uuid
+        in: path
+        name: WALLET_UUID
+        required: true
+        type: string
       produces:
       - application/json
       responses: {}

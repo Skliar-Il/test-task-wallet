@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"errors"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -102,18 +103,23 @@ func Middleware(cfg *Config) fiber.Handler {
 		err := c.Next()
 
 		duration := time.Since(start)
+		code := c.Response().StatusCode()
+		var fiberErr *fiber.Error
+		if errors.As(err, &fiberErr) {
+			code = fiberErr.Code
+		}
 
 		if cfg.Mode == "debug" {
 			GetLoggerFromCtx(ctx).Info(ctx,
 				"Response HTTP",
-				zap.Int("status", c.Response().StatusCode()),
+				zap.Int("status", code),
 				zap.String("response", c.Response().String()),
 				zap.Duration("duration", duration),
 			)
 		} else if cfg.Mode == "production" {
 			GetLoggerFromCtx(ctx).Info(ctx,
 				"Response HTTP",
-				zap.Int("status", c.Response().StatusCode()),
+				zap.Int("status", code),
 				zap.Duration("duration", duration),
 			)
 		}

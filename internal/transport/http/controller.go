@@ -12,14 +12,17 @@ import (
 )
 
 func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList) {
-	server.Use(logger.Middleware(&cfg.Logger))
 	server.Use(cors.New())
+	server.Use(logger.Middleware(&cfg.Logger))
 
 	api := server.Group(fmt.Sprintf("/api/v%d", cfg.Server.Version))
 	api.Use("/swagger/*", swagger.HandlerDefault)
 
 	walletHandler := NewWalletHandler(services.WalletService)
-	walletGroup := api.Group("/wallet")
-	walletGroup.Post("", walletHandler.UpdateWallet)
+	api.Post("/wallet", walletHandler.UpdateWallet)
+	api.Get("/wallets/:WALLET_UUID", walletHandler.GetWallet)
 
+	api.Get("/ping", func(ctx fiber.Ctx) error {
+		return ctx.Status(200).SendString("pong")
+	})
 }

@@ -31,15 +31,35 @@
                 ],
                 "responses": {}
             }
+        },
+        "/wallets/{WALLET_UUID}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wallet"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "UUID wallet",
+                        "name": "WALLET_UUID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {
         "dto.UpdateWalletDTO": {
             "type": "object",
-            "required": [
-                "amount",
-                "operationType"
-            ],
             "properties": {
                 "amount": {
                     "type": "integer",

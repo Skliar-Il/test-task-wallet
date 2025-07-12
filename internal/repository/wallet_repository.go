@@ -23,7 +23,7 @@ func NewWalletRepository() *WalletRepository {
 func (WalletRepository) GetWalletById(ctx context.Context, tx pgx.Tx, walletId uuid.UUID) (*dto.WalletDTO, error) {
 	query := `SELECT id, amount FROM wallet WHERE id = $1`
 	var wallet dto.WalletDTO
-	if err := tx.QueryRow(ctx, query, walletId).Scan(&wallet); err != nil {
+	if err := tx.QueryRow(ctx, query, walletId).Scan(&wallet.WalletId, &wallet.Amount); err != nil {
 		return nil, err
 	}
 	return &wallet, nil
