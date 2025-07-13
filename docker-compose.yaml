@@ -1,31 +1,47 @@
 volumes:
     postgres-volume:
+    redis-volume:
 
 networks:
-    people-api-network:
-        name: "people-api-network"
+    test-task-wallet-net:
+        name: "test-task-wallet-net"
         driver: bridge
 
 services:
 
     db:
-        image: postgres:17.0
+        image: postgres:${POSTGRES_VERSION}
         container_name: "test-task-wallet-database"
         env_file:
             - config.env
         networks:
-            - people-api-network
+            - test-task-wallet-net
         ports:
-            - "4545:5432"
-#        healthcheck:
-#            test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
-#            interval: 1s
-#            timeout: 60s
-#            retries: 60
-        command:
-            postgres -c max_connections=200 -c shared_buffers=256MB
+            - ${POSTGRES_PORT}:5432
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+            interval: 1s
+            timeout: 60s
+            retries: 60
         volumes:
             - postgres-volume:/var/lib/postgresql/data
+
+
+    redis:
+        image: redis:${REDIS_VERSION}
+        container_name: "test-task-wallet-redis"
+        networks:
+            - test-task-wallet-net
+        ports:
+            - ${REDIS_PORT}:6379
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        volumes:
+            - redis-volume:/data
+
 
     app:
         build:
@@ -40,8 +56,9 @@ services:
             POSTGRES_PORT: 5432
             REDIS_PORT: 6379
         ports:
-            - "8080:8080"
+            - ${SERVER_PORT_HTTP}:8080
         networks:
-            - people-api-network
+            - test-task-wallet-net
         depends_on:
             - db
+            - redis

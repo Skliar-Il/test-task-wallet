@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v3"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
+	"path/filepath"
+	"runtime"
 )
 
 var (
@@ -28,6 +30,31 @@ type Config struct {
 
 	MaxConn int32 `env:"POSTGRES_MAX_CONN" env-default:"15"`
 	MinConn int32 `env:"POSTGRES_MIN_CONN" env-default:"5"`
+}
+
+func Ping(ctx context.Context, cfg Config) bool {
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		cfg.User,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.Name,
+	)
+	conn, err := pgx.Connect(ctx, connString)
+	if err != nil {
+		return false
+	}
+	defer func() {
+		if err = conn.Close(ctx); err != nil {
+			log.Fatalf("cloce database conn error: %v", err)
+		}
+	}()
+
+	err = conn.Ping(ctx)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func New(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
@@ -55,24 +82,25 @@ func New(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	if !fiber.IsChild() {
-		m, err := migrate.New(
-			"file://database/migration",
-			fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
-				cfg.User,
-				cfg.Password,
-				cfg.Host,
-				cfg.Port,
-				cfg.Name,
-			))
-		if err != nil {
-			log.Fatalf(migrateConnectErrorString, err)
-			return nil, err
-		}
-		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatalf(migrateRunErrorString, err)
-			return nil, err
-		}
+	_, b, _, _ := runtime.Caller(0)
+	basePath := filepath.Dir(b)
+	migrationsPath := filepath.Join(basePath, "../../database/migration")
+	m, err := migrate.New(
+		"file://"+migrationsPath,
+		fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+			cfg.User,
+			cfg.Password,
+			cfg.Host,
+			cfg.Port,
+			cfg.Name,
+		))
+	if err != nil {
+		log.Fatalf(migrateConnectErrorString, err)
+		return nil, err
+	}
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf(migrateRunErrorString, err)
+		return nil, err
 	}
 
 	return pool, nil

@@ -17,7 +17,7 @@ definitions:
 info:
   contact: {}
   title: Wallet
-  version: "1.0"
+  version: '{{.Version}}'
 paths:
   /wallet:
     post:

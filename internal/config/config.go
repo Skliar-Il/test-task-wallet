@@ -10,12 +10,12 @@ import (
 	"os"
 )
 
-type serverConfig struct {
+type Server struct {
 	Version int `env:"SERVER_VERSION"`
 }
 
 type Config struct {
-	Server   serverConfig    `env:"SERVER"`
+	Server   Server          `env:"SERVER"`
 	DataBase database.Config `env:"POSTGRES"`
 	Redis    redis.Config    `env:"REDIS"`
 	Logger   logger.Config   `env:"LOGGER"`

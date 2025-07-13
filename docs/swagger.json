@@ -3,7 +3,7 @@
     "info": {
         "title": "Wallet",
         "contact": {},
-        "version": "1.0"
+        "version": "{{.Version}}"
     },
     "basePath": "/api/v1",
     "paths": {

@@ -52,6 +52,7 @@ func (s *WalletService) GetWallet(ctx context.Context, id uuid.UUID) (*dto.Walle
 		localLogger.Error(ctx, "get wallet error", zap.Error(err))
 		return nil, render.Error(fiber.ErrInternalServerError, "")
 	}
+	localLogger.Info(ctx, "get wallet")
 
 	localLogger.Info(ctx, "finish srv func GetWallet")
 	return wallet, nil
