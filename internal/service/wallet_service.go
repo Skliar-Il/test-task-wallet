@@ -5,9 +5,8 @@ import (
 	"github.com/Skliar-Il/test-task-wallet/internal/dto"
 	"github.com/Skliar-Il/test-task-wallet/internal/repository"
 	"github.com/Skliar-Il/test-task-wallet/pkg/database"
+	"github.com/Skliar-Il/test-task-wallet/pkg/exception"
 	"github.com/Skliar-Il/test-task-wallet/pkg/logger"
-	"github.com/Skliar-Il/test-task-wallet/pkg/render"
-	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -37,7 +36,7 @@ func (s *WalletService) GetWallet(ctx context.Context, id uuid.UUID) (*dto.Walle
 	tx, err := s.dbPool.Begin(ctx)
 	if err != nil {
 		localLogger.Error(ctx, "begin tx error", zap.Error(err))
-		return nil, render.Error(fiber.ErrInternalServerError, "")
+		return nil, exception.InternalServerError()
 	}
 	defer database.RollbackTx(ctx, tx)
 
@@ -46,11 +45,11 @@ func (s *WalletService) GetWallet(ctx context.Context, id uuid.UUID) (*dto.Walle
 		pgErr := database.ValidatePgxError(err)
 		if pgErr != nil && pgErr.Type == database.TypeNoRows {
 			localLogger.Info(ctx, "wallet not found")
-			return nil, render.Error(fiber.ErrNotFound, "wallet not found")
+			return nil, exception.NotFound("wallet not found")
 		}
 
 		localLogger.Error(ctx, "get wallet error", zap.Error(err))
-		return nil, render.Error(fiber.ErrInternalServerError, "")
+		return nil, exception.InternalServerError()
 	}
 	localLogger.Info(ctx, "get wallet")
 
@@ -65,7 +64,7 @@ func (s *WalletService) UpdateWallet(ctx context.Context, data *dto.UpdateWallet
 	tx, err := s.dbPool.Begin(ctx)
 	if err != nil {
 		localLogger.Error(ctx, "begin tx error", zap.Error(err))
-		return nil, render.Error(fiber.ErrInternalServerError, "")
+		return nil, exception.InternalServerError()
 	}
 	defer database.RollbackTx(ctx, tx)
 
@@ -78,14 +77,14 @@ func (s *WalletService) UpdateWallet(ctx context.Context, data *dto.UpdateWallet
 			wallet, err = s.walletRepository.CreateWallet(ctx, tx, data.WalletId)
 			if err != nil {
 				localLogger.Error(ctx, "create wallet error", zap.Error(err))
-				return nil, render.Error(fiber.ErrInternalServerError, "")
+				return nil, exception.InternalServerError()
 
 			}
 			localLogger.Info(ctx, "wallet created")
 		} else {
 
 			localLogger.Error(ctx, "get wallet error", zap.Error(err))
-			return nil, render.Error(fiber.ErrInternalServerError, "")
+			return nil, exception.InternalServerError()
 		}
 	}
 	localLogger.Info(ctx, "get wallet")
@@ -93,7 +92,7 @@ func (s *WalletService) UpdateWallet(ctx context.Context, data *dto.UpdateWallet
 	if data.OperationType == "WITHDRAW" {
 		if wallet.Amount < data.Amount {
 			localLogger.Info(ctx, "amount on wallet less then amount WITHDRAW")
-			return nil, render.Error(fiber.ErrBadRequest, "insufficient funds")
+			return nil, exception.BadRequest("insufficient funds")
 		}
 		data.Amount *= -1
 	}
@@ -101,12 +100,13 @@ func (s *WalletService) UpdateWallet(ctx context.Context, data *dto.UpdateWallet
 	wallet, err = s.walletRepository.UpdateWallet(ctx, tx, data)
 	if err != nil {
 		localLogger.Error(ctx, "update wallet error", zap.Error(err))
-		return nil, render.Error(fiber.ErrInternalServerError, "")
+		return nil, exception.InternalServerError()
 	}
 	localLogger.Info(ctx, "wallet updated")
 
 	if err := tx.Commit(ctx); err != nil {
 		localLogger.Error(ctx, "commit error", zap.Error(err))
+		return nil, exception.InternalServerError()
 	}
 
 	localLogger.Info(ctx, "finish srv func UpdateWallet")

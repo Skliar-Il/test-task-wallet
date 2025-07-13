@@ -12,18 +12,9 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/storage/redis/v3"
-	"github.com/swaggo/swag"
 	"strconv"
 	"time"
 )
-
-func getOriginalSwaggerJSON() (string, error) {
-	jsonStr, err := swag.ReadDoc()
-	if err != nil {
-		return "", err
-	}
-	return jsonStr, nil
-}
 
 func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList, redisStg *redis.Storage) {
 	server.Use(cors.New())

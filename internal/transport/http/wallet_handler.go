@@ -3,8 +3,8 @@ package http
 import (
 	"github.com/Skliar-Il/test-task-wallet/internal/dto"
 	"github.com/Skliar-Il/test-task-wallet/internal/service"
+	"github.com/Skliar-Il/test-task-wallet/pkg/exception"
 	"github.com/Skliar-Il/test-task-wallet/pkg/logger"
-	"github.com/Skliar-Il/test-task-wallet/pkg/render"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -33,7 +33,7 @@ func (w *WalletHandler) UpdateWallet(ctx fiber.Ctx) error {
 	body := new(dto.UpdateWalletDTO)
 	if err := ctx.Bind().JSON(body); err != nil {
 		localLogger.Info(ctx.Context(), "parse body exception", zap.Error(err))
-		return render.Error(fiber.ErrUnprocessableEntity, err.Error())
+		return exception.UnprocessableEntity(err.Error())
 	}
 	localLogger.Info(ctx.Context(), "parse body")
 
@@ -43,7 +43,7 @@ func (w *WalletHandler) UpdateWallet(ctx fiber.Ctx) error {
 	}
 	localLogger.Info(ctx.Context(), "get response")
 
-	return ctx.Status(200).JSON(response)
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
 // GetWallet
@@ -60,12 +60,12 @@ func (w *WalletHandler) GetWallet(ctx fiber.Ctx) error {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		localLogger.Info(ctx.Context(), "parse path param WALLET_UUID exception", zap.Error(err))
-		return render.Error(fiber.ErrUnprocessableEntity, "invalid uuid")
+		return exception.UnprocessableEntity("invalid uuid")
 	}
 
 	wallet, err := w.walletService.GetWallet(ctx.Context(), id)
 	if err != nil {
 		return err
 	}
-	return ctx.Status(200).JSON(wallet)
+	return ctx.Status(fiber.StatusOK).JSON(wallet)
 }

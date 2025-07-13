@@ -9,12 +9,19 @@ func Middleware(ctx fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
 	message := "internal server error"
 
-	var e *fiber.Error
-	if errors.As(err, &e) {
-		code = e.Code
-		message = e.Message
-	} else if err != nil {
-		message = err.Error()
+	var fiberErr *fiber.Error
+	var appErr *AppException
+	switch {
+	case errors.As(err, &appErr):
+		code = appErr.Code
+		message = appErr.Message
+	case errors.As(err, &fiberErr):
+		code = fiberErr.Code
+		message = fiberErr.Message
+	default:
+		if err != nil {
+			message = err.Error()
+		}
 	}
 
 	return ctx.Status(code).JSON(fiber.Map{

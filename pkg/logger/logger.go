@@ -3,6 +3,7 @@ package logger
 import (
 	"context"
 	"errors"
+	"github.com/Skliar-Il/test-task-wallet/pkg/exception"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -103,10 +104,14 @@ func Middleware(cfg *Config) fiber.Handler {
 		err := c.Next()
 
 		duration := time.Since(start)
+		
 		code := c.Response().StatusCode()
 		var fiberErr *fiber.Error
+		var appErr *exception.AppException
 		if errors.As(err, &fiberErr) {
 			code = fiberErr.Code
+		} else if errors.As(err, &appErr) {
+			code = appErr.Code
 		}
 
 		if cfg.Mode == "debug" {
