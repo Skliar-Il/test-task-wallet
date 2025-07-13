@@ -19,16 +19,17 @@ import (
 func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList, redisStg *redis.Storage) {
 	server.Use(cors.New())
 	server.Use(logger.Middleware(&cfg.Logger))
-	server.Use(cache.New(cache.Config{
-		Storage:      redisStg,
-		Expiration:   10 * time.Second,
-		CacheControl: true,
-	}))
 
 	api := server.Group(fmt.Sprintf("/api/v%d", cfg.Server.Version))
 	api.Use("/swagger/*", swagger.HandlerDefault)
 	docs.SwaggerInfo.Version = strconv.Itoa(cfg.Server.Version)
 	docs.SwaggerInfo.BasePath = fmt.Sprintf("/api/v%d", cfg.Server.Version)
+	
+	server.Use(cache.New(cache.Config{
+		Storage:      redisStg,
+		Expiration:   10 * time.Second,
+		CacheControl: true,
+	}))
 
 	walletHandler := NewWalletHandler(services.WalletService)
 	api.Post("/wallet", walletHandler.UpdateWallet)

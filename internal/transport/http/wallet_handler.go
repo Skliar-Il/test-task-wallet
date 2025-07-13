@@ -25,6 +25,7 @@ func NewWalletHandler(walletService service.WalletServiceInterface) *WalletHandl
 // @Produce json
 // @Summery Update Wallet
 // @Tags Wallet
+// @Success 200 {object} dto.WalletDTO
 // @Param input body dto.UpdateWalletDTO true "operation info"
 // @Router /wallet [post]
 func (w *WalletHandler) UpdateWallet(ctx fiber.Ctx) error {
@@ -51,6 +52,7 @@ func (w *WalletHandler) UpdateWallet(ctx fiber.Ctx) error {
 // @Produce json
 // @Summery get wallet
 // @Tags Wallet
+// @Success 200 {object} dto.WalletDTO
 // @Param WALLET_UUID path string true "UUID wallet" format(uuid)
 // @Router /wallets/{WALLET_UUID} [get]
 func (w *WalletHandler) GetWallet(ctx fiber.Ctx) error {

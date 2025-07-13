@@ -3,7 +3,7 @@
     "info": {
         "title": "Wallet",
         "contact": {},
-        "version": "{{.Version}}"
+        "version": "1.0"
     },
     "basePath": "/api/v1",
     "paths": {
@@ -29,7 +29,14 @@
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WalletDTO"
+                        }
+                    }
+                }
             }
         },
         "/wallets/{WALLET_UUID}": {
@@ -53,7 +60,14 @@
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WalletDTO"
+                        }
+                    }
+                }
             }
         }
     },
@@ -73,6 +87,19 @@
                     ]
                 },
                 "valletId": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        },
+        "dto.WalletDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "walletId": {
                     "type": "string",
                     "format": "uuid"
                 }

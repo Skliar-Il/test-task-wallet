@@ -37,7 +37,14 @@ const docTemplate = `{
                         }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WalletDTO"
+                        }
+                    }
+                }
             }
         },
         "/wallets/{WALLET_UUID}": {
@@ -61,7 +68,14 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.WalletDTO"
+                        }
+                    }
+                }
             }
         }
     },
@@ -85,13 +99,26 @@ const docTemplate = `{
                     "format": "uuid"
                 }
             }
+        },
+        "dto.WalletDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "walletId": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "{{.Version}}",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},

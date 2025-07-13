@@ -14,10 +14,19 @@ definitions:
         format: uuid
         type: string
     type: object
+  dto.WalletDTO:
+    properties:
+      amount:
+        minimum: 0
+        type: integer
+      walletId:
+        format: uuid
+        type: string
+    type: object
 info:
   contact: {}
   title: Wallet
-  version: '{{.Version}}'
+  version: "1.0"
 paths:
   /wallet:
     post:
@@ -32,7 +41,11 @@ paths:
           $ref: '#/definitions/dto.UpdateWalletDTO'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WalletDTO'
       tags:
       - Wallet
   /wallets/{WALLET_UUID}:
@@ -48,7 +61,11 @@ paths:
         type: string
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WalletDTO'
       tags:
       - Wallet
 swagger: "2.0"
