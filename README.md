@@ -2,8 +2,10 @@
 
 ## Запуск приложения
 1. Отредактировать config.env в коре проекта(читать раздел config.env)
-2. docker compose --env-file=config.env up --build
-
+2. 
+```bash 
+    docker compose --env-file=config.env up --build
+```
 ---
 
 ## config.env
