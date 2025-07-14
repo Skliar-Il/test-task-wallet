@@ -11,25 +11,33 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cache"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/helmet"
+	//"github.com/gofiber/fiber/v3/middleware/limiter"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/storage/redis/v3"
 	"strconv"
 	"time"
 )
 
 func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList, redisStg *redis.Storage) {
-	server.Use(cors.New())
+	server.Use(recover.New())
 	server.Use(logger.Middleware(&cfg.Logger))
-
-	api := server.Group(fmt.Sprintf("/api/v%d", cfg.Server.Version))
-	api.Use("/swagger/*", swagger.HandlerDefault)
-	docs.SwaggerInfo.Version = strconv.Itoa(cfg.Server.Version)
-	docs.SwaggerInfo.BasePath = fmt.Sprintf("/api/v%d", cfg.Server.Version)
-	
+	server.Use(cors.New())
+	server.Use(helmet.New())
 	server.Use(cache.New(cache.Config{
 		Storage:      redisStg,
 		Expiration:   10 * time.Second,
 		CacheControl: true,
 	}))
+	//server.Use(limiter.New(limiter.Config{
+	//	Max:        100,
+	//	Expiration: 1 * time.Minute,
+	//}))
+
+	api := server.Group(fmt.Sprintf("/api/v%d", cfg.Server.Version))
+	api.Use("/swagger/*", swagger.HandlerDefault)
+	docs.SwaggerInfo.Version = strconv.Itoa(cfg.Server.Version)
+	docs.SwaggerInfo.BasePath = fmt.Sprintf("/api/v%d", cfg.Server.Version)
 
 	walletHandler := NewWalletHandler(services.WalletService)
 	api.Post("/wallet", walletHandler.UpdateWallet)

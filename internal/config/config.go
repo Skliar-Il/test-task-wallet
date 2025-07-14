@@ -11,7 +11,8 @@ import (
 )
 
 type Server struct {
-	Version int `env:"SERVER_VERSION"`
+	Version  int    `env:"SERVER_VERSION"`
+	PortHttp uint16 `env:"SERVER_PORT_HTTP" default:"8080"`
 }
 
 type Config struct {

@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
@@ -37,11 +38,12 @@ func NewApp() {
 	serviceList := initializer.NewServiceList(repositoryList, dbPool)
 	app := server.NewServer(cfg, serviceList, redisConn)
 
+	serverPortStr := strconv.Itoa(int(cfg.Server.PortHttp))
 	go func() {
 		pid := os.Getpid()
 		log.Printf("[PID %d] starting server...", pid)
 
-		if err := app.Listen(":8080"); err != nil {
+		if err := app.Listen(":" + serverPortStr); err != nil {
 			log.Printf("[PID %d] server listen error: %v", pid, err)
 		}
 	}()

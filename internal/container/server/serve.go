@@ -9,13 +9,19 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/storage/redis/v3"
+	"time"
 )
 
 func NewServer(cfg *config.Config, serviceList *initializer.ServiceList, redisStg *redis.Storage) *fiber.App {
 
 	serverConfig := fiber.Config{
+		AppName:         "Wallet",
 		StructValidator: pkgvalidator.Validator{Validator: validator.New()},
 		ErrorHandler:    exception.Middleware,
+		ReadTimeout:     10 * time.Second,
+		WriteTimeout:    10 * time.Second,
+		IdleTimeout:     30 * time.Second,
+		ProxyHeader:     fiber.HeaderXForwardedFor,
 	}
 	server := fiber.New(serverConfig)
 

@@ -30,6 +30,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	port := 9999
 	var err error
 	ctx := context.Background()
 
@@ -79,7 +80,8 @@ func TestMain(m *testing.M) {
 
 	cfg := &config.Config{
 		Server: config.Server{
-			Version: 1,
+			Version:  1,
+			PortHttp: uint16(port),
 		},
 		DataBase: database.Config{
 			Host:     pgHost,
@@ -134,7 +136,6 @@ LOOP:
 	services := initializer.NewServiceList(initializer.NewRepositoryList(), db)
 	app = server.NewServer(cfg, services, rds)
 
-	port := 9999
 	baseURL = fmt.Sprintf("http://localhost:%d/api/v1", port)
 
 	go func() {

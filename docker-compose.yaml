@@ -23,6 +23,7 @@ services:
             interval: 1s
             timeout: 60s
             retries: 60
+        restart: always
         volumes:
             - postgres-volume:/var/lib/postgresql/data
 
@@ -39,6 +40,7 @@ services:
             interval: 5s
             timeout: 5s
             retries: 5
+        restart: always
         volumes:
             - redis-volume:/data
 
@@ -56,9 +58,10 @@ services:
             POSTGRES_PORT: 5432
             REDIS_PORT: 6379
         ports:
-            - ${SERVER_PORT_HTTP}:8080
+            - ${SERVER_PORT_HTTP}:${SERVER_PORT_HTTP}
         networks:
             - test-task-wallet-net
+        restart: always
         depends_on:
             - db
             - redis
