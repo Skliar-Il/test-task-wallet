@@ -26,11 +26,13 @@ type Logger struct {
 	l *zap.Logger
 }
 
-func New(ctx context.Context) (context.Context, error) {
+func New(ctx context.Context, name string) (context.Context, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
+
+	logger.Named(name)
 
 	ctx = context.WithValue(ctx, lKey, &Logger{logger})
 
@@ -76,7 +78,7 @@ func Middleware(cfg *Config) fiber.Handler {
 
 		if GetLoggerFromCtx(ctx) == nil {
 			var err error
-			ctx, err = New(ctx)
+			ctx, err = New(ctx, "fiber")
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("logger initialization failed")
 			}
@@ -104,7 +106,7 @@ func Middleware(cfg *Config) fiber.Handler {
 		err := c.Next()
 
 		duration := time.Since(start)
-		
+
 		code := c.Response().StatusCode()
 		var fiberErr *fiber.Error
 		var appErr *exception.AppException
