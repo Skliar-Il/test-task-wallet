@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/Flussen/swagger-fiber-v3"
+	"github.com/IBM/sarama"
 	"github.com/Skliar-Il/test-task-wallet/docs"
 	_ "github.com/Skliar-Il/test-task-wallet/docs"
 	"github.com/Skliar-Il/test-task-wallet/internal/config"
@@ -19,9 +20,9 @@ import (
 	"time"
 )
 
-func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList, redisStg *redis.Storage) {
+func NewController(server *fiber.App, cfg *config.Config, services *initializer.ServiceList, redisStg *redis.Storage, broker sarama.SyncProducer) {
 	server.Use(recover.New())
-	server.Use(logger.Middleware(&cfg.Logger))
+	server.Use(logger.Middleware(&cfg.Logger, broker))
 	server.Use(cors.New())
 	server.Use(helmet.New())
 	server.Use(cache.New(cache.Config{

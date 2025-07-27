@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/IBM/sarama"
 	"github.com/Skliar-Il/test-task-wallet/internal/config"
 	"github.com/Skliar-Il/test-task-wallet/internal/container/initializer"
 	"github.com/Skliar-Il/test-task-wallet/internal/transport/http"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-func NewServer(cfg *config.Config, serviceList *initializer.ServiceList, redisStg *redis.Storage) *fiber.App {
+func NewServer(cfg *config.Config, serviceList *initializer.ServiceList, redisStg *redis.Storage, broker sarama.SyncProducer) *fiber.App {
 
 	serverConfig := fiber.Config{
 		AppName:         "Wallet",
@@ -25,7 +26,7 @@ func NewServer(cfg *config.Config, serviceList *initializer.ServiceList, redisSt
 	}
 	server := fiber.New(serverConfig)
 
-	http.NewController(server, cfg, serviceList, redisStg)
+	http.NewController(server, cfg, serviceList, redisStg, broker)
 	return server
 
 }

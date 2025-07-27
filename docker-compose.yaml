@@ -44,6 +44,29 @@ services:
         volumes:
             - redis-volume:/data
 
+    zookeeper:
+        image: confluentinc/cp-zookeeper:${ZOOKEEPER_VERSION}
+        container_name: zookeeper
+        ports:
+            - "22181:2181"
+        networks:
+            - test-task-wallet-net
+        env_file:
+            - config.env
+
+    kafka:
+        image: confluentinc/cp-kafka:${KAFKA_VERSION}
+        container_name: kafka
+        restart: always
+        ports:
+            - "19092:9092"
+            - "9997:9997"
+        networks:
+            - test-task-wallet-net
+        depends_on:
+            - zookeeper
+        env_file:
+            - config.env
 
     app:
         build:
@@ -65,3 +88,5 @@ services:
         depends_on:
             - db
             - redis
+            - kafka
+            - zookeeper

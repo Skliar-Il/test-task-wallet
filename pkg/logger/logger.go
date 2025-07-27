@@ -3,11 +3,14 @@ package logger
 import (
 	"context"
 	"errors"
+	"github.com/IBM/sarama"
 	"github.com/Skliar-Il/test-task-wallet/pkg/exception"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
+	"os"
 	"time"
 )
 
@@ -15,28 +18,38 @@ type KeyLoggerType string
 
 const (
 	RequestId KeyLoggerType = "request_id"
-	lKey      KeyLoggerType = "logger"
+	lKey      KeyLoggerType = "middlewareLogger"
 )
 
+var middlewareLogger *Logger
+
 type Config struct {
-	Mode string `env:"LOGGER_MOD" default:"debug"`
+	Mode     string      `env:"LOGGER_MOD" default:"debug"`
+	Topic    string      `env:"LOGGER_KAFKA_TOPIC" default:"log"`
+	Name     string      `env:"LOGGER_NAME" default:"middlewareLogger"`
+	KafkaCfg KafkaConfig `env:"KAFKA"`
 }
 
 type Logger struct {
 	l *zap.Logger
 }
 
-func New(ctx context.Context, name string) (context.Context, error) {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, err
-	}
+func New(name string, level zapcore.LevelEnabler, broker sarama.SyncProducer, topicName string) *Logger {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoder := zapcore.NewJSONEncoder(encoderConfig)
 
-	logger.Named(name)
+	kafkaCore := NewKafkaCore(broker, topicName, level, encoder)
+	consoleCore := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig()),
+		zapcore.AddSync(os.Stdout),
+		level,
+	)
 
-	ctx = context.WithValue(ctx, lKey, &Logger{logger})
+	core := zapcore.NewTee(kafkaCore, consoleCore)
+	localLogger := zap.New(core, zap.AddCaller())
+	localLogger.Named(name)
 
-	return ctx, nil
+	return &Logger{l: localLogger}
 }
 
 func GetLoggerFromCtx(ctx context.Context) *Logger {
@@ -45,6 +58,10 @@ func GetLoggerFromCtx(ctx context.Context) *Logger {
 		return nil
 	}
 	return logger
+}
+
+func (l *Logger) Sync() error {
+	return l.l.Sync()
 }
 
 func (l *Logger) Info(ctx context.Context, msg string, fields ...zap.Field) {
@@ -68,20 +85,32 @@ func (l *Logger) Fatal(ctx context.Context, msg string, fields ...zap.Field) {
 	l.l.Fatal(msg, fields...)
 }
 
-func Middleware(cfg *Config) fiber.Handler {
+func SyncMiddleware() error {
+	return middlewareLogger.Sync()
+}
+
+func Middleware(cfg *Config, broker sarama.SyncProducer) fiber.Handler {
 	if cfg.Mode != "debug" && cfg.Mode != "production" {
-		log.Fatalf("invalid logger mod")
+		log.Fatalf("invalid middlewareLogger mod")
 	}
 	return func(c fiber.Ctx) error {
 		guid := uuid.New().String()
 		ctx := context.WithValue(c.Context(), RequestId, guid)
 
 		if GetLoggerFromCtx(ctx) == nil {
-			var err error
-			ctx, err = New(ctx, "fiber")
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("logger initialization failed")
+			if middlewareLogger == nil {
+				var err error
+				if cfg.Mode == "debug" {
+					middlewareLogger = New(cfg.Name, zapcore.DebugLevel, broker, cfg.Topic)
+				} else {
+					middlewareLogger = New(cfg.Name, zapcore.InfoLevel, broker, cfg.Topic)
+				}
+				if err != nil {
+					return c.Status(fiber.StatusInternalServerError).SendString("middlewareLogger initialization failed")
+				}
 			}
+
+			ctx = context.WithValue(ctx, lKey, middlewareLogger)
 		}
 
 		c.SetContext(ctx)

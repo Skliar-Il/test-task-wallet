@@ -6,6 +6,7 @@ import (
 	"github.com/Skliar-Il/test-task-wallet/internal/container/initializer"
 	"github.com/Skliar-Il/test-task-wallet/internal/container/server"
 	"github.com/Skliar-Il/test-task-wallet/pkg/database"
+	"github.com/Skliar-Il/test-task-wallet/pkg/logger"
 	"github.com/Skliar-Il/test-task-wallet/pkg/redis"
 	"log"
 	"os"
@@ -34,24 +35,33 @@ func NewApp() {
 		log.Fatalf("redis connection error: %v", err)
 	}
 
+	kafka, err := logger.NewSyncProducer(&cfg.Logger.KafkaCfg)
+	if err != nil {
+		log.Fatalf("kafka connection error: %v", err)
+	}
+
 	repositoryList := initializer.NewRepositoryList()
 	serviceList := initializer.NewServiceList(repositoryList, dbPool)
-	app := server.NewServer(cfg, serviceList, redisConn)
+	app := server.NewServer(cfg, serviceList, redisConn, kafka)
 
 	serverPortStr := strconv.Itoa(int(cfg.Server.PortHttp))
 	go func() {
 		pid := os.Getpid()
 		log.Printf("[PID %d] starting server...", pid)
 
-		if err := app.Listen(":" + serverPortStr); err != nil {
+		if err = app.Listen(":" + serverPortStr); err != nil {
 			log.Printf("[PID %d] server listen error: %v", pid, err)
 		}
 	}()
 	select {
 	case <-ctx.Done():
-		if err := app.Shutdown(); err != nil {
-			log.Fatalf("server shotdown error: %v", err)
+		if err = app.Shutdown(); err != nil {
+			log.Printf("server shotdown error: %v\n", err)
 		}
-		log.Printf("server stoped")
+		if err = logger.SyncMiddleware(); err != nil {
+			log.Printf("sync logger error: %v\n", err)
+		}
+		log.Println("server stopped")
+
 	}
 }
