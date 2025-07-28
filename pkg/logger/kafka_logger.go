@@ -3,6 +3,7 @@ package logger
 import (
 	"github.com/IBM/sarama"
 	"go.uber.org/zap/zapcore"
+	"log"
 )
 
 type KafkaCore struct {
@@ -48,6 +49,9 @@ func (c *KafkaCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 		Topic: c.topic,
 		Value: sarama.ByteEncoder(buffer.Bytes()),
 	})
+	if err != nil {
+		log.Printf("kafka logger error: %v", err)
+	}
 	return err
 }
 

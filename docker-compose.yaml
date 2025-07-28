@@ -1,6 +1,10 @@
 volumes:
     postgres-volume:
     redis-volume:
+    kafka-volume:
+    filebeat-volume:
+    es-volume:
+
 
 networks:
     test-task-wallet-net:
@@ -67,6 +71,64 @@ services:
             - zookeeper
         env_file:
             - config.env
+        volumes:
+            - kafka-volume:/bitnami/kafka
+
+    filebeat:
+        image: elastic/filebeat:8.10.2
+        container_name: filebeat
+        user: "1000:1000"
+        restart: unless-stopped
+        depends_on:
+            - elasticsearch
+            - kafka
+        volumes:
+            - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+            - ./filebeat-volume:/usr/share/filebeat/data:z
+            - /var/lib/docker/containers:/var/lib/docker/containers:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./filebeat-logs:/usr/share/filebeat/logs
+        environment:
+            - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+            - ELASTICSEARCH_USERNAME=elastic
+            - ELASTICSEARCH_PASSWORD=changeme
+            - KAFKA_HOSTS=kafka:9093
+        networks:
+            - test-task-wallet-net
+
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+        container_name: elasticsearch
+        environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=true
+            - xpack.security.autoconfiguration.enabled=true
+            - ELASTIC_PASSWORD=changeme
+        volumes:
+            - es-volume:/usr/share/elasticsearch/data
+        ports:
+            - "9200:9200"
+        networks:
+            - test-task-wallet-net
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+            interval: 10s
+            timeout: 10s
+            retries: 20
+
+    kibana:
+        image: kibana:8.10.2
+        ports:
+            - "5601:5601"
+        environment:
+            - SERVERNAME=kibana
+            - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+            - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL215LWtpYmFuYS10b2tlbjo1eXROY0w4Y1NnLW1vdWxKU2FPckZn
+        depends_on:
+            - elasticsearch
+        networks:
+            - test-task-wallet-net
+        restart: always
 
     app:
         build:

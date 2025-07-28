@@ -13,6 +13,5 @@ type KafkaConfig struct {
 func NewSyncProducer(cfg *KafkaConfig) (sarama.SyncProducer, error) {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
-	fmt.Printf("\n\n-----------------------------------%s:%d-------------------------\n\n", cfg.Host, cfg.Port)
 	return sarama.NewSyncProducer([]string{fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)}, config)
 }

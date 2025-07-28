@@ -1,0 +1,44 @@
+filebeat.inputs:
+    - type: kafka
+      hosts: ["${KAFKA_HOSTS}"]
+      topics: ["log"]
+      group_id: "filebeat-consumers"
+      parsers:
+          - ndjson:
+                target: ""
+                overwrite_keys: true
+      fields:
+          log_source: "kafka"
+
+processors:
+    - add_host_metadata:
+          when.not.contains.tags: forwarded
+    - add_cloud_metadata: ~
+    - decode_json_fields:
+          fields: ["message"]
+          target: ""
+          overwrite_keys: true
+    - drop_fields:
+          fields: ["agent", "ecs", "input", "log"]
+
+output.elasticsearch:
+    hosts: ["${ELASTICSEARCH_HOSTS}"]
+    username: "${ELASTICSEARCH_USERNAME}"
+    password: "${ELASTICSEARCH_PASSWORD}"
+    indices:
+        - index: "logs-%{[fields.log_source]}-%{[topic]}-%{+yyyy.MM.dd}"
+    bulk_max_size: 50
+    worker: 2
+
+setup.ilm:
+    enabled: true
+    policy_name: "logs-policy"
+    pattern: "{now/d}-000001"
+
+logging.level: info
+logging.to_files: true
+logging.files:
+    path: /usr/share/filebeat/logs
+    name: filebeat
+    keepfiles: 7
+    permissions: 0644
